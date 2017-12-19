@@ -1,0 +1,15 @@
+{
+  "name": "adbkeyboard",
+  "version": "0.0.1",
+  "description": "",
+  "main": "Main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "commander": "^2.12.2",
+    "keypress": "^0.2.1"
+  }
+}
