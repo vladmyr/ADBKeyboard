@@ -99,6 +99,7 @@ const KEYCODE_MAP = {
 
   // general
   RETURN: 'KEYCODE_DPAD_CENTER',
+  ESCAPE: 'KEYCODE_BACK',
 
   // alphabet characters
   A: 'KEYCODE_A', 
@@ -192,6 +193,10 @@ const KEYCODE_MAP = {
   PAGEDOWN(key) { return key.ctrl ? 'KEYCODE_VOLUME_DOWN' : undefined; }
 }
 
+/**
+ * TODO: improve performance by sending multiple commands with same child process. 
+ * See https://stackoverflow.com/questions/24070041/send-multiple-same-keyevents-to-the-adb-shell
+ */
 class ADBCommander {
   static KeyboardListener(key) {
     const keyCode = this._ParseKey(key);
