@@ -100,71 +100,72 @@ const KEYCODE_MAP = {
   // general
   RETURN: 'KEYCODE_DPAD_CENTER',
   ESCAPE: 'KEYCODE_BACK',
+  SPACE: "KEYCODE_SPACE",
 
   // alphabet characters
-  A: 'KEYCODE_A', 
-  B: 'KEYCODE_B', 
-  C: 'KEYCODE_C', 
-  D: 'KEYCODE_D', 
-  E: 'KEYCODE_E', 
-  F: 'KEYCODE_F', 
-  G: 'KEYCODE_G', 
-  H(key) { return key.meta ? 'KEYCODE_HOME' : 'KEYCODE_H'; } , 
-  I: 'KEYCODE_I', 
-  J: 'KEYCODE_J', 
-  K: 'KEYCODE_K', 
-  L: 'KEYCODE_L', 
-  M: 'KEYCODE_M', 
-  N: 'KEYCODE_N', 
-  O: 'KEYCODE_O', 
-  P: 'KEYCODE_P', 
-  Q: 'KEYCODE_Q', 
-  R: 'KEYCODE_R', 
-  S: 'KEYCODE_S', 
-  T: 'KEYCODE_T', 
-  U: 'KEYCODE_U', 
-  V: 'KEYCODE_V', 
-  W: 'KEYCODE_W', 
-  X: 'KEYCODE_X', 
-  Y: 'KEYCODE_Y', 
-  Z: 'KEYCODE_Z',
+  A: 'a', 
+  B: 'b', 
+  C: 'c', 
+  D: 'd', 
+  E: 'e', 
+  F: 'f', 
+  G: 'g', 
+  // H(key) { return key.meta ? 'KEYCODE_HOME' : 'h'; } , 
+  H: 'h',
+  I: 'i', 
+  J: 'j', 
+  K: 'k', 
+  L: 'l', 
+  M: 'm', 
+  N: 'n', 
+  O: 'o', 
+  P: 'p', 
+  Q: 'q', 
+  R: 'r', 
+  S: 's', 
+  T: 't', 
+  U: 'u', 
+  V: 'v', 
+  W: 'w', 
+  X: 'x', 
+  Y: 'y', 
+  Z: 'z',
 
   // numeric
-  '0': "KEYCODE_0", 
-  '1': "KEYCODE_1", 
-  '2': "KEYCODE_2", 
-  '3': "KEYCODE_3", 
-  '4': "KEYCODE_4", 
-  '5': "KEYCODE_5", 
-  '6': "KEYCODE_6", 
-  '7': "KEYCODE_7", 
-  '8': "KEYCODE_8", 
-  '9': "KEYCODE_9", 
+  '0': "0", 
+  '1': "1", 
+  '2': "2", 
+  '3': "3", 
+  '4': "4", 
+  '5': "5", 
+  '6': "6", 
+  '7': "7", 
+  '8': "8", 
+  '9': "9", 
 
-  // marks
-  'SPACE': "KEYCODE_SPACE",
-  // '!': ,
-  '@': "KEYCODE_AT",
-  // '#':,
-  // '$':,
-  // '%':,
-  // '^':,
-  // '&':,
-  // '*':,
-  // '(':,
-  // ')':,
-  // '[':,
-  // ']':,
-  // '{':,
-  // '}':,
-  // '_':,
-  '+': "KEYCODE_PLUS",
-  '-': "KEYCODE_MINUS",
-  '=': "KEYCODE_EQUALS",
-  '/': "KEYCODE_SLASH",
-  ',': "KEYCODE_COMMA",
-  '.': "KEYCODE_PERIOD",
-  '`': "KEYCODE_GRAVE",
+  '@': '@',
+  '#': '#',
+  '$': '$',
+  '%': '%',
+  '^': '^',
+  '&': '&',
+  '*': '*',
+  '(': '(',
+  ')': ')',
+  '[': '[',
+  ']': ']',
+  '{': '{',
+  '}': '}',
+  '_': '_',
+  '+': '+',
+  '-': '-',
+  '=': '=',
+  '/': '/',
+  ',': ',',
+  '.': '.',
+  ':': ':',
+  ';': ';',
+  '`': '`',
 
   // "KEYCODE_COMMA": 55, 
   // "KEYCODE_PERIOD": 56, 
@@ -197,11 +198,10 @@ const KEYCODE_MAP = {
  * TODO: improve performance by sending multiple commands with same child process. 
  * See https://stackoverflow.com/questions/24070041/send-multiple-same-keyevents-to-the-adb-shell
  */
+
 class ADBCommander {
   static KeyboardListener(key) {
     const keyCode = this._ParseKey(key);
-
-    console.log('keyCode', keyCode);
 
     if (keyCode) {
       this._KeyCodeQueue.push(keyCode);
@@ -210,11 +210,19 @@ class ADBCommander {
   }
 
   static _ParseKey(key) {
-    return key && key.name 
-    ? typeof KEYCODE_MAP[key.name.toUpperCase()] == 'function'
-      ? ADB_KEYEVENT[KEYCODE_MAP[key.name.toUpperCase()](key)]
-      : ADB_KEYEVENT[KEYCODE_MAP[key.name.toUpperCase()]]
-    : undefined;
+    if (!key || !key.name) {
+      return
+    }
+
+    return {
+      code: typeof KEYCODE_MAP[key.name.toUpperCase()] == 'function'
+        ? ADB_KEYEVENT[KEYCODE_MAP[key.name.toUpperCase()](key)]
+        : key.isInputChar
+          ? KEYCODE_MAP[key.name.toUpperCase()]
+          : ADB_KEYEVENT[KEYCODE_MAP[key.name.toUpperCase()]],
+      isShift: key.shift,
+      isInputChar: key.isInputChar && typeof KEYCODE_MAP[key.name.toUpperCase()] != 'function'
+    }
   }
 
   static _IssueKeyCodesFromQueue() {
@@ -223,12 +231,12 @@ class ADBCommander {
     }
 
     this._IsIssuing = true;
-    this._IssueKeyCodesFromGenerator(this._GetGetKeyCodeCodeFromQueue());
+    this._IssueKeyCodesFromGenerator(this._GetKeyCodeCodeFromQueue());
 
     return;
   }
 
-  static * _GetGetKeyCodeCodeFromQueue() {
+  static * _GetKeyCodeCodeFromQueue() {
     for (let i = 0; i < this._KeyCodeQueue.length; i++) {
       yield this._KeyCodeQueue[i];
     }
@@ -246,7 +254,17 @@ class ADBCommander {
       return;
     }
 
-    exec(`adb shell input keyevent ${next.value}`, (err, stdout, stderr) => {
+    let keyCode = next.value;
+
+    if (keyCode.isInputChar && keyCode.isShift) keyCode.code = keyCode.code.toUpperCase();
+    
+    let command = keyCode.isInputChar 
+      ? `adb shell input text "${keyCode.code}"`
+      : `adb shell input keyevent ${keyCode.code}`;
+
+    console.log(command);
+
+    exec(command, (err, stdout, stderr) => {
       this._IssueKeyCodesFromGenerator(generator);
     });
 
